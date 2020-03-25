@@ -111,7 +111,6 @@ if (params.bwa) {
 }
 
 if (!params.bwa && params.fasta) {
-  if (!params.bwa_index) {
       process BWAIndex {
           tag "$bwa_base"
 
