@@ -37,7 +37,7 @@ def helpMessage() {
      nextflow run t-neumann/repliseq-nf
 
      Options:
-        --samples        Tab-delimited text file specifying the samples
+        --design         Tab-delimited text file specifying the samples
                          to be processed. (default: 'samples.txt')
                          The following columns are required:
                             - name: name of sample
@@ -73,9 +73,7 @@ if (params.help) {
     exit 0
 }
 
-params.hicdigest = params.genome ? params.genomes[ params.genome ].hicdigest ?: false : false
-params.hicRestriction = params.genome ? params.genomes[ params.genome ].hicRestriction ?: false : false
-params.bowtie2 = params.genome ? params.genomes[ params.genome ].bowtie2 ?: false : false
+params.bwa = params.genome ? params.genomes[ params.genome ].bwa ?: false : false
 
 log.info ""
 log.info " parameters "
