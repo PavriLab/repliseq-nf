@@ -254,7 +254,7 @@ process TrimGalore {
 }
 
 /*
- * STEP 3.1 - Align read 1 with bwa
+ * STEP 3 - Align read with bwa
  */
 process BWAMem {
     tag "$name"
