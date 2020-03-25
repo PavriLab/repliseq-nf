@@ -81,8 +81,7 @@ log.info ""
 log.info " parameters "
 log.info " ======================"
 log.info " Design                   : ${params.design}"
---single_end [bool]             Specifies that the input is single-end reads
-
+log.info " Single end               : ${params.singleEnd}"
 log.info " Genome                   : ${params.genome}"
 log.info " Fasta                    : ${params.fasta}"
 log.info " BWA index                : ${params.bwa}"
