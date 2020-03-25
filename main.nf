@@ -3,7 +3,7 @@
 /*
 * MIT License
 *
-* Copyright (c) 2019 Tobias Neumann, Daniel Malzl
+* Copyright (c) 2020 Tobias Neumann
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -31,10 +31,10 @@ def helpMessage() {
     ================================================================
      DESCRIPTION
 
-     Basic processing of HiC data.
+     Basic processing of RepliSeq data.
 
      Usage:
-     nextflow run t-neumann/hicer-nf
+     nextflow run t-neumann/repliseq-nf
 
      Options:
         --samples        Tab-delimited text file specifying the samples
@@ -44,7 +44,7 @@ def helpMessage() {
                             - read1: Read file with first read mates (R1) in fastq(.gz) format
                             - read2: Read file with second read mates (R2) in fastq(.gz) format
 
-        --single_end [bool]             Specifies that the input is single-end reads
+        --singleEnd      Specifies that the input is single-end reads
 
         --outputDir      Directory name to save results to. (Defaults to
                          'results')
@@ -59,11 +59,10 @@ def helpMessage() {
         cbe              CBE cluster execution with singularity
 
      Docker:
-     zuberlab/hicer-nf:latest
+     zuberlab/repliseq-nf:latest
 
      Authors:
      Tobias Neumann (tobias.neumann@imp.ac.at)
-     Daniel Malzl (daniel.malzl@imp.ac.at)
     """.stripIndent()
 }
 
