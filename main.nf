@@ -131,11 +131,6 @@ if (!params.bwa && params.fasta) {
       }
 }
 
-Channel
-    .fromPath( params.samples )
-    .splitCsv(sep: '\t', header: true)
-    .set { samples }
-
 /*
  * PREPROCESSING - REFORMAT DESIGN FILE AND CHECK VALIDITY
  */
