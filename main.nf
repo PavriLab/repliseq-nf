@@ -315,7 +315,7 @@ process MergedRepBAM {
 
     if (bam_files.size() > 1) {
         """
-        samtools merge -@ $task.cpus ${name}.merged.bam $bam_files
+        samtools merge -@ $task.cpus ${name}.merged.bam ${bam_files.join(' ')}
 
         samtools index ${name}.merged.bam
 
