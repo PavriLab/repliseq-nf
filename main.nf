@@ -73,7 +73,7 @@ if (params.help) {
     exit 0
 }
 
-params.bwa = params.genome ? params.genomes[ params.genome ].bwa ?: false : false
+
 
 log.info ""
 log.info " parameters "
@@ -87,7 +87,15 @@ log.info " Output directory         : ${params.outputDir}"
 log.info " ======================"
 log.info ""
 
+params.bwa = params.genome ? params.genomes[ params.genome ].bwa ?: false : false
+
 if (params.design)     { ch_input = file(params.design, checkIfExists: true) } else { exit 1, "Samples design file not specified!" }
+
+if (params.singleEnd) {
+    ch_bamtools_filter_config = file(params.bamtools_filter_se_config, checkIfExists: true)
+} else {
+    ch_bamtools_filter_config = file(params.bamtools_filter_pe_config, checkIfExists: true)
+}
 
 if (params.bwa) {
 
@@ -254,10 +262,11 @@ process BWAMem {
     file index from bwaIndex.collect()
 
     output:
-    set val(name), file("*.sorted.{bam,bam.bai}") into ch_bwa_bam
+    set val(name), file("*.filtered.{bam,bam.bai}") into ch_bwa_bam
     file "*.{flagstat,idxstats,stats}" into ch_sort_bam_flagstat_mqc
 
     script:
+    filter_params = params.singleEnd ? "-F 0x004" : "-F 0x004 -F 0x0008 -f 0x001"
     """
     bwa mem \\
         -t $task.cpus \\
@@ -266,12 +275,21 @@ process BWAMem {
         $reads \\
         | samtools view -@ $task.cpus -b -h -F 0x0100 -O BAM -o unsorted.bam -
 
-    samtools sort -@ $task.cpus -o ${name}.sorted.bam unsorted.bam
+    samtools sort -@ $task.cpus -o sorted.bam unsorted.bam
 
-    samtools index ${name}.sorted.bam
-    samtools flagstat ${name}.sorted.bam > ${name}.sorted.bam.flagstat
-    samtools idxstats ${name}.sorted.bam > ${name}.sorted.bam.idxstats
-    samtools stats ${name}.sorted.bam > ${name}.sorted.bam.stats
+    samtools view \\
+        $filter_params \\
+        -F 0x0400 -q 1 \\
+        -b sorted.bam \\
+        | bamtools filter \\
+            -out ${prefix}.filtered.bam \\
+            -script $bamtools_filter_config
+
+    samtools index ${prefix}.filtered.bam
+    samtools flagstat ${prefix}.filtered.bam > ${prefix}.filtered.bam.flagstat
+    samtools idxstats ${prefix}.filtered.bam > ${prefix}.filtered.bam.idxstats
+    samtools stats ${prefix}.filtered.bam > ${prefix}.filtered.bam.stats
+
     """
 }
 
