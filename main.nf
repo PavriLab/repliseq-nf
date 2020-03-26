@@ -46,6 +46,8 @@ def helpMessage() {
 
         --singleEnd      Specifies that the input is single-end reads
 
+        --windowSize     Specifies the non-overlapping window size for binning
+
         --outputDir      Directory name to save results to. (Defaults to
                          'results')
 
@@ -282,13 +284,13 @@ process BWAMem {
         -F 0x0400 -q 1 \\
         -b sorted.bam \\
         | bamtools filter \\
-            -out ${prefix}.filtered.bam \\
+            -out ${name}.filtered.bam \\
             -script $bamtools_filter_config
 
-    samtools index ${prefix}.filtered.bam
-    samtools flagstat ${prefix}.filtered.bam > ${prefix}.filtered.bam.flagstat
-    samtools idxstats ${prefix}.filtered.bam > ${prefix}.filtered.bam.idxstats
-    samtools stats ${prefix}.filtered.bam > ${prefix}.filtered.bam.stats
+    samtools index ${name}.filtered.bam
+    samtools flagstat ${name}.filtered.bam > ${name}.filtered.bam.flagstat
+    samtools idxstats ${name}.filtered.bam > ${name}.filtered.bam.idxstats
+    samtools stats ${name}.filtered.bam > ${name}.filtered.bam.stats
 
     """
 }
