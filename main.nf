@@ -182,21 +182,6 @@ if (params.singleEnd) {
                 design_multiple_samples }
 }
 
-// Boolean value for replicates existing in design
-replicatesExist = design_replicates_exist
-                      .map { it -> it[0].split('_')[-2].replaceAll('R','').toInteger() }
-                      .flatten()
-                      .max()
-                      .val > 1
-
-// Boolean value for multiple groups existing in design
-multipleGroups = design_multiple_samples
-                     .map { it -> it[0].split('_')[0..-3].join('_') }
-                     .flatten()
-                     .unique()
-                     .count()
-                     .val > 1
-
 /*
 * STEP 1 - FastQC
 */
@@ -301,7 +286,7 @@ process BWAMem {
  * STEP 7 Merge library BAM files across all replicates
  */
 ch_bwa_bam
-    .map { it -> [ it[0].split('_')[0] + "_" + it[0].split('_')[1], it[1] ] }
+    .map { it -> [ it[0].split(';')[0] + "_" + it[0].split(';')[1], it[1] ] }
     .groupTuple(by: [0])
     .map { it ->  [ it[0], it[1].flatten() ] }
     .set { ch_bwa_bam_rep }
@@ -322,7 +307,7 @@ process MergedRepBAM {
     set val(name), file(bams) from ch_bwa_bam_rep
 
     output:
-    set val(name), file("*.markdup.{bam,bam.bai}") into ch_mrep_bam_bedgraph,
+    set val(name), file("*.markdup.{bam,bam.bai}") into ch_mrep_bam_bedgraph
     set val(name), file("*.flagstat") into ch_mrep_bam_flagstat_bigwig,
                                            ch_mrep_bam_flagstat_mqc
     file "*.{idxstats,stats}" into ch_mrep_bam_stats_mqc
@@ -372,9 +357,9 @@ process MergedRepBAM {
 }
 
 ch_mrep_bam_bedgraph
-    .map { it -> [ it[0].split('_')[0], it[0].split('_')[1], it[1] ] }
+    .map { it -> [ it[0].split('_')[0], it[0].split('_')[0], it[1] ] }
     .groupTuple(by: [0])
-    .map { it ->  [ it[0], it[1].flatten() ] }
+    .map { it ->  [ it[0], it[2].flatten() ] }
     .set { ch_mrep_bam_bedgraph1 }
 
 process windowedCoverage {
