@@ -320,7 +320,7 @@ process MergedRepBAM {
     set val(name), file(bams) from ch_bwa_bam_rep
 
     output:
-    set val(name), file("*${prefix}.markdup.{bam,bam.bai}") into ch_mrep_bam_bigwig,
+    set val(name), file("*.markdup.{bam,bam.bai}") into ch_mrep_bam_bigwig,
                                                                 ch_mrep_bam_macs
     set val(name), file("*.flagstat") into ch_mrep_bam_flagstat_bigwig,
                                            ch_mrep_bam_flagstat_macs,
