@@ -6,6 +6,8 @@
 #######################################################################
 #######################################################################
 
+from __future__ import print_function
+
 import os
 import sys
 import requests
@@ -42,7 +44,7 @@ def check_design(DesignFileIn,DesignFileOut):
     fin = open(DesignFileIn,'r')
     header = fin.readline().strip().split(',')
     if header != HEADER:
-        print "{} header: {} != {}".format(ERROR_STR,','.join(header),','.join(HEADER))
+        print("{} header: {} != {}".format(ERROR_STR,','.join(header),','.join(HEADER)))
         sys.exit(1)
 
     numColList = []
@@ -55,25 +57,25 @@ def check_design(DesignFileIn,DesignFileOut):
             ## CHECK VALID NUMBER OF COLUMNS PER SAMPLE
             numCols = len(lspl)
             if numCols not in [3,4]:
-                print "{}: Invalid number of columns (3 for single-end or 4 for paired-end)!\nLine: '{}'".format(ERROR_STR,line.strip())
+                print("{}: Invalid number of columns (3 for single-end or 4 for paired-end)!\nLine: '{}'".format(ERROR_STR,line.strip()))
                 sys.exit(1)
             numColList.append(numCols)
 
             ## CHECK GROUP COLUMN HAS NO SPACES
             group,replicate,fastQFiles = lspl[0],lspl[1],lspl[2:]
             if group.find(' ') != -1:
-                print "{}: Group id contains spaces!\nLine: '{}'".format(ERROR_STR,line.strip())
+                print("{}: Group id contains spaces!\nLine: '{}'".format(ERROR_STR,line.strip()))
                 sys.exit(1)
 
             ## CHECK REPLICATE COLUMN IS INTEGER
             if not replicate.isdigit():
-                print "{}: Replicate id not an integer!\nLine: '{}'".format(ERROR_STR,line.strip())
+                print("{}: Replicate id not an integer!\nLine: '{}'".format(ERROR_STR,line.strip()))
                 sys.exit(1)
 
             for fastq in fastQFiles:
                 ## CHECK FASTQ FILE EXTENSION
                 if fastq[-9:] != '.fastq.gz' and fastq[-6:] != '.fq.gz':
-                    print "{}: FastQ file has incorrect extension (has to be '.fastq.gz' or 'fq.gz') - {}\nLine: '{}'".format(ERROR_STR,fastq,line.strip())
+                    print("{}: FastQ file has incorrect extension (has to be '.fastq.gz' or 'fq.gz') - {}\nLine: '{}'".format(ERROR_STR,fastq,line.strip()))
                     sys.exit(1)
 
             ## CREATE GROUP MAPPING DICT = {GROUP_ID: {REPLICATE_ID:[[FASTQ_FILES]]}
@@ -90,7 +92,7 @@ def check_design(DesignFileIn,DesignFileOut):
 
     ## CHECK IF DATA IS PAIRED-END OR SINGLE-END AND NOT A MIXTURE
     if min(numColList) != max(numColList):
-        print "{}: Mixture of paired-end and single-end reads!".format(ERROR_STR)
+        print("{}: Mixture of paired-end and single-end reads!".format(ERROR_STR))
         sys.exit(1)
 
     ## CHECK IF MULTIPLE GROUPS EXIST
@@ -107,7 +109,7 @@ def check_design(DesignFileIn,DesignFileOut):
         ## CHECK THAT REPLICATE IDS ARE IN FORMAT 1..<NUM_REPLICATES>
         uniq_rep_ids = set(groupRepDict[group].keys())
         if len(uniq_rep_ids) != max(uniq_rep_ids):
-            print "{}: Replicate IDs must start with 1..<num_replicates>\nGroup: {}, Replicate IDs: {}".format(ERROR_STR,group,list(uniq_rep_ids))
+            print("{}: Replicate IDs must start with 1..<num_replicates>\nGroup: {}, Replicate IDs: {}".format(ERROR_STR,group,list(uniq_rep_ids)))
             sys.exit(1)
         numRepList.append(max(uniq_rep_ids))
 
