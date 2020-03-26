@@ -320,7 +320,7 @@ process MergedRepBAM {
     set val(name), file(bams) from ch_bwa_bam_rep
 
     output:
-    set val(name), file("*${prefix}.sorted.{bam,bam.bai}") into ch_mrep_bam_bigwig,
+    set val(name), file("*${prefix}.markdup.{bam,bam.bai}") into ch_mrep_bam_bigwig,
                                                                 ch_mrep_bam_macs
     set val(name), file("*.flagstat") into ch_mrep_bam_flagstat_bigwig,
                                            ch_mrep_bam_flagstat_macs,
@@ -356,9 +356,17 @@ process MergedRepBAM {
         """
     } else {
       """
-      ln -s ${bams[0]} ${name}.sorted.bam
-      ln -s ${bams[1]} ${name}.sorted.bam.bai
-      touch ${name}.MarkDuplicates.metrics.txt
+
+      picard -Xmx${task.memory.toGiga()}g MarkDuplicates \\
+          INPUT=${bams[0]} \\
+          OUTPUT=${name}.markdup.bam \\
+          ASSUME_SORTED=true \\
+          REMOVE_DUPLICATES=true \\
+          METRICS_FILE=${name}.MarkDuplicates.metrics.txt \\
+          VALIDATION_STRINGENCY=LENIENT \\
+          TMP_DIR=tmp
+
+      samtools index ${name}.markdup.bam
       samtools flagstat ${name}.markdup.bam > ${name}.markdup.bam.flagstat
       samtools idxstats ${name}.markdup.bam > ${name}.markdup.bam.idxstats
       samtools stats ${name}.markdup.bam > ${name}.markdup.bam.stats
