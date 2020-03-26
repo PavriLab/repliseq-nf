@@ -262,6 +262,7 @@ process BWAMem {
     input:
     set val(name), file(reads) from ch_trimmed_reads
     file index from bwaIndex.collect()
+    file bamtools_filter_config from ch_bamtools_filter_config
 
     output:
     set val(name), file("*.filtered.{bam,bam.bai}") into ch_bwa_bam
