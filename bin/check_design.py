@@ -80,9 +80,9 @@ def check_design(DesignFileIn,DesignFileOut):
 
             ## CREATE GROUP MAPPING DICT = {GROUP_ID: {REPLICATE_ID:[[FASTQ_FILES]]}
             replicate = int(replicate)
-            if not groupRepDict.has_key(group):
+            if not group in groupRepDict:
                 groupRepDict[group] = {}
-            if not groupRepDict[group].has_key(replicate):
+            if not replicate in groupRepDict[group]:
                 groupRepDict[group][replicate] = []
             groupRepDict[group][replicate].append(fastQFiles)
 
