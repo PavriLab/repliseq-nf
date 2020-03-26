@@ -357,13 +357,13 @@ process MergedRepBAM {
 }
 
 ch_mrep_bam_bedgraph
-    .map { it -> [ it[0].split('_')[0], it[0].split('_')[0], it[1] ] }
-    .groupTuple(by: [0])
+    .map { it -> [ it[0].split('_')[0], it[0].split('_')[1], it[1] ] }
+    .groupTuple(by: [0,1])
     .map { it ->  [ it[0], it[2].flatten() ] }
     .set { ch_mrep_bam_bedgraph1 }
+    .subscribe { println it }
 
-process windowedCoverage {
-    tag "$name"
+/*    tag "$name"
 
     input:
     set val(name), file(bam) from ch_mrep_bam_bedgraph1
@@ -381,7 +381,7 @@ process windowedCoverage {
                --scaleFactorsMethod readCount \
                --operation log2 -p $task.cpus
     """
-}
+}*/
 
 workflow.onComplete {
 	println ( workflow.success ? "COMPLETED!" : "FAILED" )
