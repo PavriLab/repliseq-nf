@@ -136,7 +136,7 @@ if (!params.bwa && params.fasta) {
  */
 process CheckDesign {
     tag "$design"
-    publishDir "${params.outdir}/pipeline_info", mode: 'copy'
+    publishDir "${params.outputDir}/pipeline_info", mode: 'copy'
 
     input:
     file design from ch_input
@@ -244,7 +244,7 @@ process TrimGalore {
 }
 
 /*
- * STEP 3 - Align read with bwa
+ * STEP 3 - Align reads with bwa and filter
  */
 process BWAMem {
     tag "$name"
@@ -254,7 +254,8 @@ process BWAMem {
     file index from bwaIndex.collect()
 
     output:
-    set val(name), file("*.bam") into ch_bwa_bam
+    set val(name), file("*.sorted.{bam,bam.bai}") into ch_bwa_bam
+    file "*.{flagstat,idxstats,stats}" into ch_sort_bam_flagstat_mqc
 
     script:
     """
@@ -263,8 +264,85 @@ process BWAMem {
         -M \\
         ${index}/${bwa_base} \\
         $reads \\
-        | samtools view -@ $task.cpus -b -h -F 0x0100 -O BAM -o ${name}.bam -
+        | samtools view -@ $task.cpus -b -h -F 0x0100 -O BAM -o unsorted.bam -
+
+    samtools sort -@ $task.cpus -o ${name}.sorted.bam unsorted.bam
+
+    samtools index ${name}.sorted.bam
+    samtools flagstat ${name}.sorted.bam > ${name}.sorted.bam.flagstat
+    samtools idxstats ${name}.sorted.bam > ${name}.sorted.bam.idxstats
+    samtools stats ${name}.sorted.bam > ${name}.sorted.bam.stats
     """
+}
+
+/*
+ * STEP 7 Merge library BAM files across all replicates
+ */
+ch_bwa_bam
+    .map { it -> [ it[0].split('_')[0..-2].join('_'), it[1] ] }
+    .groupTuple(by: [0])
+    .map { it ->  [ it[0], it[1].flatten() ] }
+    .set { ch_bwa_bam_rep }
+
+process MergedRepBAM {
+    tag "$name"
+    publishDir "${params.outdir}/mergedReplicate", mode: 'copy',
+        saveAs: { filename ->
+                      if (filename.endsWith(".flagstat")) "samtools_stats/$filename"
+                      else if (filename.endsWith(".idxstats")) "samtools_stats/$filename"
+                      else if (filename.endsWith(".stats")) "samtools_stats/$filename"
+                      else if (filename.endsWith(".metrics.txt")) "picard_metrics/$filename"
+                      else filename
+                }
+
+    input:
+    set val(name), file(bams) from ch_bwa_bam_rep
+
+    output:
+    set val(name), file("*${prefix}.sorted.{bam,bam.bai}") into ch_mrep_bam_bigwig,
+                                                                ch_mrep_bam_macs
+    set val(name), file("*.flagstat") into ch_mrep_bam_flagstat_bigwig,
+                                           ch_mrep_bam_flagstat_macs,
+                                           ch_mrep_bam_flagstat_mqc
+    file "*.{idxstats,stats}" into ch_mrep_bam_stats_mqc
+    file "*.txt" into ch_mrep_bam_metrics_mqc
+
+    when:
+    replicatesExist
+
+    script:
+    bam_files = bams.findAll { it.toString().endsWith('.bam') }.sort()
+
+    if (bam_files.size() > 1) {
+        """
+        samtools merge -@ $task.cpus ${name}.merged.bam $bam_files
+
+        samtools index ${name}.merged.bam
+
+        picard -Xmx${task.memory.toGiga()}g MarkDuplicates \\
+            INPUT=${name}.merged.bam \\
+            OUTPUT=${name}.markdup.bam \\
+            ASSUME_SORTED=true \\
+            REMOVE_DUPLICATES=true \\
+            METRICS_FILE=${name}.MarkDuplicates.metrics.txt \\
+            VALIDATION_STRINGENCY=LENIENT \\
+            TMP_DIR=tmp
+
+        samtools index ${name}.markdup.bam
+        samtools flagstat ${name}.markdup.bam > ${name}.markdup.bam.flagstat
+        samtools idxstats ${name}.markdup.bam > ${name}.markdup.bam.idxstats
+        samtools stats ${name}.markdup.bam > ${name}.markdup.bam.stats
+        """
+    } else {
+      """
+      ln -s ${bams[0]} ${name}.sorted.bam
+      ln -s ${bams[1]} ${name}.sorted.bam.bai
+      touch ${name}.MarkDuplicates.metrics.txt
+      samtools flagstat ${name}.markdup.bam > ${name}.markdup.bam.flagstat
+      samtools idxstats ${name}.markdup.bam > ${name}.markdup.bam.idxstats
+      samtools stats ${name}.markdup.bam > ${name}.markdup.bam.stats
+      """
+    }
 }
 
 workflow.onComplete {
