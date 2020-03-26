@@ -153,7 +153,7 @@ process CheckDesign {
 /*
  * Create channels for input fastq files
  */
-if (params.single_end) {
+if (params.singleEnd) {
     ch_design_reads_csv
         .splitCsv(header:true, sep:',')
         .map { row -> [ row.sample_id, [ file(row.fastq_1, checkIfExists: true) ] ] }
@@ -199,7 +199,7 @@ process FastQC {
    file "*.{zip,html}" into ch_fastqc_reports_mqc
 
    script:
-   if (params.single_end) {
+   if (params.singleEnd) {
        """
        [ ! -f  ${name}.fastq.gz ] && ln -s $reads ${name}.fastq.gz
        fastqc -q -t $task.cpus ${name}.fastq.gz
@@ -229,7 +229,7 @@ process TrimGalore {
     file "*.{zip,html}" into ch_trimgalore_fastqc_reports_mqc
 
     script:
-    if (params.single_end) {
+    if (params.singleEnd) {
         """
         [ ! -f  ${name}.fastq.gz ] && ln -s $reads ${name}.fastq.gz
         trim_galore --fastqc --gzip ${name}.fastq.gz
