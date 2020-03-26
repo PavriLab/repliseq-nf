@@ -279,7 +279,7 @@ process BWAMem {
  * STEP 7 Merge library BAM files across all replicates
  */
 ch_bwa_bam
-    .map { it -> [ it[0].split('_')[0..-2].join('_'), it[1] ] }
+    .map { it -> [ it[0].split('_')[0], it[1] ] }
     .groupTuple(by: [0])
     .map { it ->  [ it[0], it[1].flatten() ] }
     .set { ch_bwa_bam_rep }
