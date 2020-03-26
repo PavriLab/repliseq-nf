@@ -81,6 +81,7 @@ log.info ""
 log.info " parameters "
 log.info " ======================"
 log.info " Design                   : ${params.design}"
+log.info " Window size              : ${params.windowSize}"
 log.info " Single end               : ${params.singleEnd}"
 log.info " Genome                   : ${params.genome}"
 log.info " Fasta                    : ${params.fasta}"
@@ -313,6 +314,7 @@ process MergedRepBAM {
                       else if (filename.endsWith(".idxstats")) "samtools_stats/$filename"
                       else if (filename.endsWith(".stats")) "samtools_stats/$filename"
                       else if (filename.endsWith(".metrics.txt")) "picard_metrics/$filename"
+                      else if (filename.endsWith(".{bam,bam.bai}")) "bams/$filename"
                       else filename
                 }
 
@@ -320,16 +322,11 @@ process MergedRepBAM {
     set val(name), file(bams) from ch_bwa_bam_rep
 
     output:
-    set val(name), file("*.markdup.{bam,bam.bai}") into ch_mrep_bam_bigwig,
-                                                                ch_mrep_bam_macs
+    set val(name), file("*.markdup.{bam,bam.bai}") into ch_mrep_bam_bedgraph,
     set val(name), file("*.flagstat") into ch_mrep_bam_flagstat_bigwig,
-                                           ch_mrep_bam_flagstat_macs,
                                            ch_mrep_bam_flagstat_mqc
     file "*.{idxstats,stats}" into ch_mrep_bam_stats_mqc
     file "*.txt" into ch_mrep_bam_metrics_mqc
-
-    when:
-    replicatesExist
 
     script:
     bam_files = bams.findAll { it.toString().endsWith('.bam') }.sort()
@@ -372,6 +369,33 @@ process MergedRepBAM {
       samtools stats ${name}.markdup.bam > ${name}.markdup.bam.stats
       """
     }
+}
+
+ch_bwa_bam
+    .map { it -> [ it[0].split('_')[0], it[1] ] }
+    .groupTuple(by: [0])
+    .map { it ->  [ it[0], it[1].flatten() ] }
+    .set { ch_bwa_bam_rep }
+
+process windowedCoverage {
+    tag "$name"
+
+    input:
+    set val(name), file(bam) from ch_mrep_bam_bedgraph
+
+    output:
+    set val(name), file("*.markdup.{bam,bam.bai}") into bedGraphChannel
+
+    script:
+
+    """
+    bamCompare -b1 results/E.markdup.bam \
+               -b2 results/L.markdup.bam \
+               -o test.bg -of bedgraph \
+               -bs ${name}.bg \
+               --scaleFactorsMethod readCount \
+               --operation log2 -p $task.cpus
+    """
 }
 
 workflow.onComplete {

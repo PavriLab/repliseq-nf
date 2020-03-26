@@ -38,7 +38,7 @@ args = argParser.parse_args()
 def check_design(DesignFileIn,DesignFileOut):
 
     ERROR_STR = 'ERROR: Please check design file'
-    HEADER = ['group', 'replicate', 'fastq_1', 'fastq_2']
+    HEADER = ['condition', 'phase', 'replicate', 'fastq_1', 'fastq_2']
 
     ## CHECK HEADER
     fin = open(DesignFileIn,'r')
@@ -56,15 +56,21 @@ def check_design(DesignFileIn,DesignFileOut):
 
             ## CHECK VALID NUMBER OF COLUMNS PER SAMPLE
             numCols = len(lspl)
-            if numCols not in [3,4]:
-                print("{}: Invalid number of columns (3 for single-end or 4 for paired-end)!\nLine: '{}'".format(ERROR_STR,line.strip()))
+            if numCols not in [4,5]:
+                print("{}: Invalid number of columns (4 for single-end or 5 for paired-end)!\nLine: '{}'".format(ERROR_STR,line.strip()))
                 sys.exit(1)
             numColList.append(numCols)
 
-            ## CHECK GROUP COLUMN HAS NO SPACES
-            group,replicate,fastQFiles = lspl[0],lspl[1],lspl[2:]
-            if group.find(' ') != -1:
-                print("{}: Group id contains spaces!\nLine: '{}'".format(ERROR_STR,line.strip()))
+            condition,phase,replicate,fastQFiles = lspl[0],lspl[1],lspl[3],lspl[4:]
+
+            ## CHECK CONDITION HAS NO SPACES
+            if condition.find(' ') != -1:
+                print("{}: Sample id contains spaces!\nLine: '{}'".format(ERROR_STR,line.strip()))
+                sys.exit(1)
+
+            ## CHECK PHASE IS E OR L
+            if phase != "E" and group != "L":
+                print("{}: Phase is neither E nor L!\nLine: '{}'".format(ERROR_STR,line.strip()))
                 sys.exit(1)
 
             ## CHECK REPLICATE COLUMN IS INTEGER
@@ -78,13 +84,15 @@ def check_design(DesignFileIn,DesignFileOut):
                     print("{}: FastQ file has incorrect extension (has to be '.fastq.gz' or 'fq.gz') - {}\nLine: '{}'".format(ERROR_STR,fastq,line.strip()))
                     sys.exit(1)
 
-            ## CREATE GROUP MAPPING DICT = {GROUP_ID: {REPLICATE_ID:[[FASTQ_FILES]]}
+            ## CREATE GROUP MAPPING DICT = {CONDITION : {PHASE: {REPLICATE_ID:[[FASTQ_FILES]]}}
             replicate = int(replicate)
-            if not group in groupRepDict:
-                groupRepDict[group] = {}
-            if not replicate in groupRepDict[group]:
-                groupRepDict[group][replicate] = []
-            groupRepDict[group][replicate].append(fastQFiles)
+            if not condition in groupRepDict:
+                groupRepDict[condition] = dict()
+            if not phase in groupRepDict[condition]:
+                groupRepDict[condition][phase] = dict()
+            if not replicate in groupRepDict[condition][phase]:
+                groupRepDict[condition][phase][replicate] = []
+            groupRepDict[condition][phase][replicate].append(fastQFiles)
 
         else:
             fin.close()
@@ -95,43 +103,38 @@ def check_design(DesignFileIn,DesignFileOut):
         print("{}: Mixture of paired-end and single-end reads!".format(ERROR_STR))
         sys.exit(1)
 
-    ## CHECK IF MULTIPLE GROUPS EXIST
-    multiGroups = False
-    if len(groupRepDict) > 1:
-        multiGroups = True
+    ## CHECK THAT E AND L FOR EACH SAMPLE
+    for condition in groupRepDict:
+        if not 'E' in groupRepDict[condition]:
+            print("No early phase samples in condition " + sample + "!")
+            sys.exit(1)
+        if not 'L' in groupRepDict[condition]:
+            print("No late phase samples in condition " + sample + "!")
+            sys.exit(1)
 
     ## WRITE TO FILE
     numRepList = []
     fout = open(DesignFileOut,'w')
     fout.write(','.join(['sample_id','fastq_1','fastq_2']) + '\n')
-    for group in sorted(groupRepDict.keys()):
+    for condition in sorted(groupRepDict.keys()):
+        for phase in groupRepDict[condition]:
 
-        ## CHECK THAT REPLICATE IDS ARE IN FORMAT 1..<NUM_REPLICATES>
-        uniq_rep_ids = set(groupRepDict[group].keys())
-        if len(uniq_rep_ids) != max(uniq_rep_ids):
-            print("{}: Replicate IDs must start with 1..<num_replicates>\nGroup: {}, Replicate IDs: {}".format(ERROR_STR,group,list(uniq_rep_ids)))
-            sys.exit(1)
-        numRepList.append(max(uniq_rep_ids))
+            ## CHECK THAT REPLICATE IDS ARE IN FORMAT 1..<NUM_REPLICATES>
+            uniq_rep_ids = set(groupRepDict[condition][phase].keys())
+            if len(uniq_rep_ids) != max(uniq_rep_ids):
+                print("{}: Replicate IDs must start with 1..<num_replicates>\nGroup: {}, Replicate IDs: {}".format(ERROR_STR,group,list(uniq_rep_ids)))
+                sys.exit(1)
+            numRepList.append(max(uniq_rep_ids))
 
-        for replicate in sorted(groupRepDict[group].keys()):
-            for idx in range(len(groupRepDict[group][replicate])):
-                fastQFiles = groupRepDict[group][replicate][idx]
-                sample_id = "{}_R{}_T{}".format(group,replicate,idx+1)
-                if len(fastQFiles) == 1:
-                    fout.write(','.join([sample_id] + fastQFiles) + ',\n')
-                else:
-                    fout.write(','.join([sample_id] + fastQFiles) + '\n')
+            for replicate in sorted(groupRepDict[condition][phase].keys()):
+                for idx in range(len(groupRepDict[condition][phase][replicate])):
+                    fastQFiles = groupRepDict[condition][phase][replicate][idx]
+                    sample_id = "{}_R{}_T{}".format(condition,phase,replicate,idx+1)
+                    if len(fastQFiles) == 1:
+                        fout.write(','.join([sample_id] + fastQFiles) + ',\n')
+                    else:
+                        fout.write(','.join([sample_id] + fastQFiles) + '\n')
     fout.close()
-
-    ## CHECK IF REPLICATES IN DESIGN
-    repsExist = False
-    if max(numRepList) != 1:
-        repsExist = True
-
-    ## CHECK FOR BALANCED DESIGN ACROSS MULTIPLE GROUPS.
-    balancedDesign = False
-    if len(set(numRepList)) == 1 and multiGroups and repsExist:
-        balancedDesign = True
 
 ############################################
 ############################################
