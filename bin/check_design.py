@@ -61,15 +61,20 @@ def check_design(DesignFileIn,DesignFileOut):
                 sys.exit(1)
             numColList.append(numCols)
 
-            condition,phase,replicate,fastQFiles = lspl[0],lspl[1],lspl[3],lspl[4:]
+            condition,phase,replicate,fastQFiles = lspl[0],lspl[1],lspl[2],lspl[3:]
 
             ## CHECK CONDITION HAS NO SPACES
             if condition.find(' ') != -1:
-                print("{}: Sample id contains spaces!\nLine: '{}'".format(ERROR_STR,line.strip()))
+                print("{}: Condition id contains semicolons!\nLine: '{}'".format(ERROR_STR,line.strip()))
+                sys.exit(1)
+
+            ## CHECK CONDITION HAS NO ;
+            if condition.find(';') != -1:
+                print("{}: Condition id contains semicolons!\nLine: '{}'".format(ERROR_STR,line.strip()))
                 sys.exit(1)
 
             ## CHECK PHASE IS E OR L
-            if phase != "E" and group != "L":
+            if phase != "E" and phase != "L":
                 print("{}: Phase is neither E nor L!\nLine: '{}'".format(ERROR_STR,line.strip()))
                 sys.exit(1)
 
@@ -129,7 +134,7 @@ def check_design(DesignFileIn,DesignFileOut):
             for replicate in sorted(groupRepDict[condition][phase].keys()):
                 for idx in range(len(groupRepDict[condition][phase][replicate])):
                     fastQFiles = groupRepDict[condition][phase][replicate][idx]
-                    sample_id = "{}_R{}_T{}".format(condition,phase,replicate,idx+1)
+                    sample_id = "{};{};R{};T{}".format(condition,phase,replicate,idx+1)
                     if len(fastQFiles) == 1:
                         fout.write(','.join([sample_id] + fastQFiles) + ',\n')
                     else:

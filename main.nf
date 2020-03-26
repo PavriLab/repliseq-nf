@@ -301,7 +301,7 @@ process BWAMem {
  * STEP 7 Merge library BAM files across all replicates
  */
 ch_bwa_bam
-    .map { it -> [ it[0].split('_')[0], it[1] ] }
+    .map { it -> [ it[0].split('_')[0] + "_" + it[0].split('_')[1], it[1] ] }
     .groupTuple(by: [0])
     .map { it ->  [ it[0], it[1].flatten() ] }
     .set { ch_bwa_bam_rep }
@@ -371,26 +371,26 @@ process MergedRepBAM {
     }
 }
 
-ch_bwa_bam
-    .map { it -> [ it[0].split('_')[0], it[1] ] }
+ch_mrep_bam_bedgraph
+    .map { it -> [ it[0].split('_')[0], it[0].split('_')[1], it[1] ] }
     .groupTuple(by: [0])
     .map { it ->  [ it[0], it[1].flatten() ] }
-    .set { ch_bwa_bam_rep }
+    .set { ch_mrep_bam_bedgraph1 }
 
 process windowedCoverage {
     tag "$name"
 
     input:
-    set val(name), file(bam) from ch_mrep_bam_bedgraph
+    set val(name), file(bam) from ch_mrep_bam_bedgraph1
 
     output:
-    set val(name), file("*.markdup.{bam,bam.bai}") into bedGraphChannel
+    set val(name), file("*.bg") into bedGraphChannel
 
     script:
 
     """
-    bamCompare -b1 results/E.markdup.bam \
-               -b2 results/L.markdup.bam \
+    bamCompare -b1 $bam[0] \
+               -b2 $bam[1] \
                -o test.bg -of bedgraph \
                -bs ${name}.bg \
                --scaleFactorsMethod readCount \
