@@ -307,7 +307,7 @@ ch_bwa_bam
 
 process MergedRepBAM {
     tag "$name"
-    publishDir "${params.outdir}/mergedReplicate", mode: 'copy',
+    publishDir "${params.outputDir}", mode: 'copy',
         saveAs: { filename ->
                       if (filename.endsWith(".flagstat")) "samtools_stats/$filename"
                       else if (filename.endsWith(".idxstats")) "samtools_stats/$filename"
