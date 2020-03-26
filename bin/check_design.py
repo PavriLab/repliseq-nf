@@ -69,8 +69,8 @@ def check_design(DesignFileIn,DesignFileOut):
                 sys.exit(1)
 
             ## CHECK CONDITION HAS NO ;
-            if condition.find(';') != -1:
-                print("{}: Condition id contains semicolons!\nLine: '{}'".format(ERROR_STR,line.strip()))
+            if condition.find('_') != -1:
+                print("{}: Condition id contains underscores!\nLine: '{}'".format(ERROR_STR,line.strip()))
                 sys.exit(1)
 
             ## CHECK PHASE IS E OR L
@@ -134,7 +134,7 @@ def check_design(DesignFileIn,DesignFileOut):
             for replicate in sorted(groupRepDict[condition][phase].keys()):
                 for idx in range(len(groupRepDict[condition][phase][replicate])):
                     fastQFiles = groupRepDict[condition][phase][replicate][idx]
-                    sample_id = "{};{};R{};T{}".format(condition,phase,replicate,idx+1)
+                    sample_id = "{}_{}_R{}_T{}".format(condition,phase,replicate,idx+1)
                     if len(fastQFiles) == 1:
                         fout.write(','.join([sample_id] + fastQFiles) + ',\n')
                     else:
