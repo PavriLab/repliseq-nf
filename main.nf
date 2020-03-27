@@ -402,7 +402,7 @@ process RTNormalization {
     tag "$name"
 
     input:
-    set val(name), file(bedgraph) from ELRatioChannel.collect()
+    set file(bedgraph) from ELRatioChannel.collect()
 
     output:
     set val(name), file("*.bg") into RTNormalizationChannel
