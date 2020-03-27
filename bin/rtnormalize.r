@@ -90,7 +90,7 @@ for(i in 1:(ncol(merge)-3)){
 
 for(i in 1:length(AllLoess)){
   write.table(AllLoess[[i]][complete.cases(AllLoess[[i]]),],
-    gsub(".bg" , "loess.bg" , colnames(AllLoess[[i]])) [4],
+    gsub(".bg" , ".loess.bg" , colnames(AllLoess[[i]])) [4],
     sep= "\t" , row.names=FALSE, quote=FALSE, col.names = FALSE
   )
 }
@@ -109,7 +109,7 @@ colnames(merge_norm)<-colnames(merge)
 
 for(i in 4:ncol(merge_norm)){
   write.table(merge_norm[complete.cases(merge_norm[,i]), c(1,2,3,i)],
-    gsub(".bg" , "qnorm.bg", colnames(merge_norm)[i]),
+    gsub(".bg" , ".qnorm.bg", colnames(merge_norm)[i]),
     sep= "\t" ,row.names=FALSE, quote=FALSE, col.names = FALSE
   )
 }
@@ -143,7 +143,7 @@ for(i in 1:(ncol(merge_norm)-3)){
 
 for(i in 1:length(AllLoess)){
   write.table(AllLoess[[i]][complete.cases(AllLoess[[i]]),],
-    gsub(".bg" , "qnorm.loess.bg" , colnames(AllLoess[[i]])) [4],
+    gsub(".bg" , ".qnorm.loess.bg" , colnames(AllLoess[[i]])) [4],
     sep= "\t" , row.names=FALSE, quote=FALSE, col.names = FALSE
   )
 }

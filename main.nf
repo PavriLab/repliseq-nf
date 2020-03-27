@@ -459,11 +459,7 @@ process RTNormalization {
     }
 }
 
-RTNormalizationChannel
-    .map { it ->  [ it, it ] }
-    .subscribe{ println $it }
-
-/*process bigwig {
+process bigwig {
 
   publishDir path: "${params.outputDir}",
               mode: 'copy',
@@ -474,7 +470,7 @@ RTNormalizationChannel
 
     input:
     file(chrsizes) from chromSizesChannel.collect()
-    set val(name), file(bedgraph) from RTNormalizationChannel.map { file -> return [ file.getName(), file ] }
+    set val(name), file(bedgraph) from RTNormalizationChannel.flatten().map { it ->  [ it.baseName, it ] }
 
     output:
     file("*.bw") into bigwig
@@ -485,7 +481,7 @@ RTNormalizationChannel
     bedGraphToBigWig $bedgraph $chrsizes ${name}.bw
 
     '''
-}*/
+}
 
 
 workflow.onComplete {
