@@ -357,13 +357,19 @@ process MergedRepBAM {
 }
 
 ch_mrep_bam_bedgraph
-    .map { it -> [ it[0].split('_')[0], it[0].split('_')[1], it[1] ] }
-    .groupTuple(by: [0,1])
-    .map { it ->  [ it[0], it[2].flatten() ] }
+    .map { it ->
+        def condition = it[0].split('_')[0]
+        def phase = it[0].split('_')[1]
+        def dictionary = [ (phase) : it[1].flatten()]
+        return tuple(condition, dictionary)
+     }
+    .groupTuple(by: [0])
+    .map { it ->  [ it[0], it[1].flatten() ] }
     .set { ch_mrep_bam_bedgraph1 }
-    .subscribe { println it }
 
-/*    tag "$name"
+process ELRatio {
+
+    tag "$name"
 
     input:
     set val(name), file(bam) from ch_mrep_bam_bedgraph1
@@ -374,14 +380,14 @@ ch_mrep_bam_bedgraph
     script:
 
     """
-    bamCompare -b1 $bam[0] \
-               -b2 $bam[1] \
+    bamCompare -b1 $bam[0]["E"][0] \
+               -b2 $bam[0]["L"][0] \
                -o test.bg -of bedgraph \
                -bs ${name}.bg \
                --scaleFactorsMethod readCount \
                --operation log2 -p $task.cpus
     """
-}*/
+}
 
 workflow.onComplete {
 	println ( workflow.success ? "COMPLETED!" : "FAILED" )
