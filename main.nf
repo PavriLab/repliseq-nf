@@ -307,7 +307,7 @@ process MergedRepBAM {
     set val(name), file(bams) from ch_bwa_bam_rep
 
     output:
-    set val(name), file("*.markdup.{bam,bam.bai}") into ch_mrep_bam_bedgraph
+    set val(name), file("*.markdup.{bam,bam.bai}") into ch_mrep_bam_bedgraph, ch_mrep_bam_bedgraphLog
     set val(name), file("*.flagstat") into ch_mrep_bam_flagstat_bigwig,
                                            ch_mrep_bam_flagstat_mqc
     file "*.{idxstats,stats}" into ch_mrep_bam_stats_mqc
@@ -366,6 +366,17 @@ ch_mrep_bam_bedgraph
     .groupTuple(by: [0])
     .map { it ->  [ it[0], it[1].flatten() ] }
     .set { ch_mrep_bam_bedgraph1 }
+
+ch_mrep_bam_bedgraphLog
+        .map { it ->
+            def condition = it[0].split('_')[0]
+            def phase = it[0].split('_')[1]
+            def dictionary = [ (phase) : it[1].flatten()]
+            return tuple(condition, dictionary)
+         }
+        .groupTuple(by: [0])
+        .map { it ->  [ it[0], it[1].flatten() ] }
+        .subscribe { println it }
 
 process ELRatio {
 
