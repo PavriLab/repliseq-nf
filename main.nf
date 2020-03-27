@@ -169,14 +169,24 @@ if (params.singleEnd) {
         .splitCsv(header:true, sep:',')
         .map { row -> [ row.sample_id, [ file(row.fastq_1, checkIfExists: true) ] ] }
         .into { rawReadsFastqcChannel;
-                rawReadsTrimgaloreChannel }
+                rawReadsTrimgaloreChannel;
+                designMultipleGroups }
 } else {
     designCheckedChannel
         .splitCsv(header:true, sep:',')
         .map { row -> [ row.sample_id, [ file(row.fastq_1, checkIfExists: true), file(row.fastq_2, checkIfExists: true) ] ] }
         .into { rawReadsFastqcChannel;
-                rawReadsTrimgaloreChannel }
+                rawReadsTrimgaloreChannel;
+                designMultipleGroups }
 }
+
+// Boolean value for multiple groups existing in design
+multipleGroups = designMultipleGroups
+                     .map { it -> it[0].split('_')[0] }
+                     .flatten()
+                     .unique()
+                     .count()
+                     .val > 1
 
 /*
 * STEP 1 - FastQC
@@ -399,9 +409,21 @@ process RTNormalization {
 
     script:
 
-    """
-    touch test.bg
-    """
+    if multipleGroups:
+
+      """
+      echo -e "chr\tstart\tstop\t"`ls *.bg` | sed 's/\ /\t/g' > merge_RT.txt
+      bedtools unionbedg -filler "NA" -i *.bg >> merge_RT.txt
+
+      """
+
+    else :
+
+      """
+      echo -e "chr\tstart\tstop\t"`ls *.bg` | sed 's/\ /\t/g' > merge_RT.txt
+      cat *.bg >> merge_RT.txt
+
+      """
 }
 
 workflow.onComplete {
