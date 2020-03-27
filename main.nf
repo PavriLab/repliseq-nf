@@ -459,6 +459,11 @@ process RTNormalization {
     }
 }
 
+RTNormalizationChannel
+  .flatten()
+  .map { it ->  [ it.baseName, it ] }
+  .set(bigwigInputChannel)
+
 process bigwig {
 
   publishDir path: "${params.outputDir}",
@@ -470,10 +475,10 @@ process bigwig {
 
     input:
     file(chrsizes) from chromSizesChannel.collect()
-    set val(name), file(bedgraph) from RTNormalizationChannel.flatten().map { it ->  [ it.baseName, it ] }
+    set val(name), file(bedgraph) from bigwigInputChannel
 
     output:
-    file("*.bw") into bigwig
+    file("*.bw") into bigwigOutput
 
     script:
 
