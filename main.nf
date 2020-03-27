@@ -48,6 +48,8 @@ def helpMessage() {
 
         --windowSize     Specifies the non-overlapping window size for binning
 
+        --loessSpan      Specifies the span for Loess smoothing
+
         --outputDir      Directory name to save results to. (Defaults to
                          'results')
 
@@ -82,6 +84,7 @@ log.info " parameters "
 log.info " ======================"
 log.info " Design                   : ${params.design}"
 log.info " Window size              : ${params.windowSize}"
+log.info " Loess span               : ${params.loessSpan}"
 log.info " Single end               : ${params.singleEnd}"
 log.info " Genome                   : ${params.genome}"
 log.info " Fasta                    : ${params.fasta}"
@@ -98,6 +101,13 @@ if (params.singleEnd) {
     bamtoolsFilterConfigChannel = file(params.bamtoolsFilterSEConf, checkIfExists: true)
 } else {
     bamtoolsFilterConfigChannel = file(params.bamtoolsFilterPEConf, checkIfExists: true)
+}
+
+if (!params.fasta) {
+   exit 1, "No genome fasta specified!"
+} else {
+   fastaForGenomeSizes = Channel.fromPath( params.fasta , checkIfExists: true)
+      .ifEmpty { exit 1, "Genome fasta file not found: ${params.fasta}" }
 }
 
 if (params.bwa) {
@@ -117,6 +127,23 @@ if (params.bwa) {
       .ifEmpty { exit 1, "Genome fasta file not found: ${params.fasta}" }
 } else {
     exit 1, "No reference genome files specified!"
+}
+
+process MakeGenomeFilter {
+    tag "$fasta"
+
+    input:
+    file fasta from fastaForGenomeSizes
+
+    output:
+
+    file "*.sizes" into chromSizesChannel
+
+    script:
+    """
+    samtools faidx $fasta
+    cut -f 1,2 ${fasta}.fai > ${fasta}.sizes
+    """
 }
 
 if (!params.bwa && params.fasta) {
@@ -405,7 +432,7 @@ process RTNormalization {
     file(bedgraph) from ELRatioChannel.collect()
 
     output:
-    file("*.txt") into RTNormalizationChannel
+    file("*.bg") into RTNormalizationChannel
 
     script:
 
@@ -415,6 +442,8 @@ process RTNormalization {
       echo -e "chr\tstart\tstop\t"`ls *.bg` | sed "s/\\ /\\t/g" > merge_RT.txt
       bedtools unionbedg -filler "NA" -i *.bg >> merge_RT.txt
 
+      rtnormalize.r -r merge_RT.txt -s ${params.loessSpan}
+
       '''
 
     } else {
@@ -423,9 +452,36 @@ process RTNormalization {
       echo -e "chr\tstart\tstop\t"`ls *.bg` | sed "s/\\ /\\t/g" > merge_RT.txt
       cat *.bg >> merge_RT.txt
 
+      rtnormalize.r -r merge_RT.txt -s ${params.loessSpan}
+
       '''
     }
 }
+
+process bigwig {
+
+  publishDir path: "${params.outputDir}",
+              mode: 'copy',
+              overwrite: 'true',
+              pattern: "*bw"
+
+    tag "$name"
+
+    input:
+    file(chrsizes) from chromSizesChannel.collect()
+    set(name), file(bedgraph) from RTNormalizationChannel.map { file -> return [ file.getName(), file ] }
+
+    output:
+    file("*.bw") into bigwig
+
+    script:
+
+    '''
+    bedGraphToBigWig $bedgraph $chrsizes ${name}.bw
+
+    '''
+}
+
 
 workflow.onComplete {
 	println ( workflow.success ? "COMPLETED!" : "FAILED" )
