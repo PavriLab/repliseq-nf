@@ -409,7 +409,7 @@ process RTNormalization {
 
     script:
 
-    if multipleGroups:
+    if (multipleGroups) {
 
       """
       echo -e "chr\tstart\tstop\t"`ls *.bg` | sed 's/\ /\t/g' > merge_RT.txt
@@ -417,13 +417,14 @@ process RTNormalization {
 
       """
 
-    else :
+    } else {
 
       """
       echo -e "chr\tstart\tstop\t"`ls *.bg` | sed 's/\ /\t/g' > merge_RT.txt
       cat *.bg >> merge_RT.txt
 
       """
+    }
 }
 
 workflow.onComplete {
