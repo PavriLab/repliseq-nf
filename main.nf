@@ -411,19 +411,19 @@ process RTNormalization {
 
     if (multipleGroups) {
 
-      """
+      '''
       echo -e "chr\tstart\tstop\t"`ls *.bg` | sed 's/\ /\t/g' > merge_RT.txt
       bedtools unionbedg -filler "NA" -i *.bg >> merge_RT.txt
 
-      """
+      '''
 
     } else {
 
-      """
+      '''
       echo -e "chr\tstart\tstop\t"`ls *.bg` | sed 's/\ /\t/g' > merge_RT.txt
       cat *.bg >> merge_RT.txt
 
-      """
+      '''
     }
 }
 
