@@ -94,6 +94,7 @@ log.info " ======================"
 log.info ""
 
 params.bwa = params.genome ? params.genomes[ params.genome ].bwa ?: false : false
+params.fasta = params.genome ? params.genomes[ params.genome ].fasta ?: false : false
 
 if (params.design)     { designChannel = file(params.design, checkIfExists: true) } else { exit 1, "Samples design file not specified!" }
 
@@ -434,7 +435,7 @@ process RTNormalization {
     output:
     file("*.bg") into RTNormalizationChannel
 
-    script:
+    shell:
 
     if (multipleGroups) {
 
@@ -442,7 +443,7 @@ process RTNormalization {
       echo -e "chr\tstart\tstop\t"`ls *.bg` | sed "s/\\ /\\t/g" > merge_RT.txt
       bedtools unionbedg -filler "NA" -i *.bg >> merge_RT.txt
 
-      rtnormalize.r -r merge_RT.txt -s ${params.loessSpan}
+      rtnormalize.r -r merge_RT.txt -s !{params.loessSpan}
 
       '''
 
@@ -452,13 +453,17 @@ process RTNormalization {
       echo -e "chr\tstart\tstop\t"`ls *.bg` | sed "s/\\ /\\t/g" > merge_RT.txt
       cat *.bg >> merge_RT.txt
 
-      rtnormalize.r -r merge_RT.txt -s ${params.loessSpan}
+      rtnormalize.r -r merge_RT.txt -s !{params.loessSpan}
 
       '''
     }
 }
 
-process bigwig {
+RTNormalizationChannel
+    .map { it ->  [ it, it ] }
+    .subscribe{ println $it }
+
+/*process bigwig {
 
   publishDir path: "${params.outputDir}",
               mode: 'copy',
@@ -469,7 +474,7 @@ process bigwig {
 
     input:
     file(chrsizes) from chromSizesChannel.collect()
-    set(name), file(bedgraph) from RTNormalizationChannel.map { file -> return [ file.getName(), file ] }
+    set val(name), file(bedgraph) from RTNormalizationChannel.map { file -> return [ file.getName(), file ] }
 
     output:
     file("*.bw") into bigwig
@@ -480,7 +485,7 @@ process bigwig {
     bedGraphToBigWig $bedgraph $chrsizes ${name}.bw
 
     '''
-}
+}*/
 
 
 workflow.onComplete {
