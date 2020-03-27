@@ -380,7 +380,7 @@ process ELRatio {
     set val(name), val(bam) from conditionChannel
 
     output:
-    set val(name), file("*.bg") into ELRatioChannel
+    file("*.bg") into ELRatioChannel
 
     script:
 
@@ -402,10 +402,10 @@ process RTNormalization {
     tag "$name"
 
     input:
-    set file(bedgraph) from ELRatioChannel.collect()
+    file(bedgraph) from ELRatioChannel.collect()
 
     output:
-    set val(name), file("*.bg") into RTNormalizationChannel
+    file("*.txt") into RTNormalizationChannel
 
     script:
 
