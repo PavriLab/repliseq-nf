@@ -92,12 +92,12 @@ log.info ""
 
 params.bwa = params.genome ? params.genomes[ params.genome ].bwa ?: false : false
 
-if (params.design)     { ch_input = file(params.design, checkIfExists: true) } else { exit 1, "Samples design file not specified!" }
+if (params.design)     { designChannel = file(params.design, checkIfExists: true) } else { exit 1, "Samples design file not specified!" }
 
 if (params.singleEnd) {
-    ch_bamtools_filter_config = file(params.bamtools_filter_se_config, checkIfExists: true)
+    bamtoolsFilterConfigChannel = file(params.bamtoolsFilterSEConf, checkIfExists: true)
 } else {
-    ch_bamtools_filter_config = file(params.bamtools_filter_pe_config, checkIfExists: true)
+    bamtoolsFilterConfigChannel = file(params.bamtoolsFilterPEConf, checkIfExists: true)
 }
 
 if (params.bwa) {
@@ -150,10 +150,10 @@ process CheckDesign {
     publishDir "${params.outputDir}/pipeline_info", mode: 'copy'
 
     input:
-    file design from ch_input
+    file design from designChannel
 
     output:
-    file "*.csv" into ch_design_reads_csv
+    file "*.csv" into designCheckedChannel
 
     script:
     """
@@ -165,21 +165,17 @@ process CheckDesign {
  * Create channels for input fastq files
  */
 if (params.singleEnd) {
-    ch_design_reads_csv
+    designCheckedChannel
         .splitCsv(header:true, sep:',')
         .map { row -> [ row.sample_id, [ file(row.fastq_1, checkIfExists: true) ] ] }
-        .into { ch_raw_reads_fastqc;
-                ch_raw_reads_trimgalore;
-                design_replicates_exist;
-                design_multiple_samples }
+        .into { rawReadsFastqcChannel;
+                rawReadsTrimgaloreChannel }
 } else {
-    ch_design_reads_csv
+    designCheckedChannel
         .splitCsv(header:true, sep:',')
         .map { row -> [ row.sample_id, [ file(row.fastq_1, checkIfExists: true), file(row.fastq_2, checkIfExists: true) ] ] }
-        .into { ch_raw_reads_fastqc;
-                ch_raw_reads_trimgalore;
-                design_replicates_exist;
-                design_multiple_samples }
+        .into { rawReadsFastqcChannel;
+                rawReadsTrimgaloreChannel }
 }
 
 /*
@@ -189,10 +185,10 @@ process FastQC {
    tag "$name"
 
    input:
-   set val(name), file(reads) from ch_raw_reads_fastqc
+   set val(name), file(reads) from rawReadsFastqcChannel
 
    output:
-   file "*.{zip,html}" into ch_fastqc_reports_mqc
+   file "*.{zip,html}" into fastqcMultiqcChannel
 
    script:
    if (params.singleEnd) {
@@ -217,12 +213,12 @@ process TrimGalore {
     tag "$name"
 
     input:
-    set val(name), file(reads) from ch_raw_reads_trimgalore
+    set val(name), file(reads) from rawReadsTrimgaloreChannel
 
     output:
-    set val(name), file("*.fq.gz") into ch_trimmed_reads
-    file "*.txt" into ch_trimgalore_results_mqc
-    file "*.{zip,html}" into ch_trimgalore_fastqc_reports_mqc
+    set val(name), file("*.fq.gz") into trimmedReadChannel
+    file "*.txt" into trimgaloreMultiqcChannel
+    file "*.{zip,html}" into trimgaloreFastqcMultiqcChannel
 
     script:
     if (params.singleEnd) {
@@ -246,13 +242,13 @@ process BWAMem {
     tag "$name"
 
     input:
-    set val(name), file(reads) from ch_trimmed_reads
+    set val(name), file(reads) from trimmedReadChannel
     file index from bwaIndex.collect()
-    file bamtools_filter_config from ch_bamtools_filter_config
+    file bamtoolsFilterConfig from bamtoolsFilterConfigChannel
 
     output:
-    set val(name), file("*.filtered.{bam,bam.bai}") into ch_bwa_bam
-    file "*.{flagstat,idxstats,stats}" into ch_sort_bam_flagstat_mqc
+    set val(name), file("*.filtered.{bam,bam.bai}") into bwaChannel
+    file "*.{flagstat,idxstats,stats}" into bwaMultiqcChannel
 
     script:
     filter_params = params.singleEnd ? "-F 0x004" : "-F 0x004 -F 0x0008 -f 0x001"
@@ -272,7 +268,7 @@ process BWAMem {
         -b sorted.bam \\
         | bamtools filter \\
             -out ${name}.filtered.bam \\
-            -script $bamtools_filter_config
+            -script $bamtoolsFilterConfig
 
     samtools index ${name}.filtered.bam
     samtools flagstat ${name}.filtered.bam > ${name}.filtered.bam.flagstat
@@ -285,11 +281,11 @@ process BWAMem {
 /*
  * STEP 7 Merge library BAM files across all replicates
  */
-ch_bwa_bam
+bwaChannel
     .map { it -> [ it[0].split('_')[0] + "_" + it[0].split('_')[1], it[1] ] }
     .groupTuple(by: [0])
     .map { it ->  [ it[0], it[1].flatten() ] }
-    .set { ch_bwa_bam_rep }
+    .set { mergeChannel }
 
 process MergedRepBAM {
     tag "$name"
@@ -304,14 +300,13 @@ process MergedRepBAM {
                 }
 
     input:
-    set val(name), file(bams) from ch_bwa_bam_rep
+    set val(name), file(bams) from mergeChannel
 
     output:
-    set val(name), file("*.markdup.{bam,bam.bai}") into ch_mrep_bam_bedgraph, ch_mrep_bam_bedgraphLog
-    set val(name), file("*.flagstat") into ch_mrep_bam_flagstat_bigwig,
-                                           ch_mrep_bam_flagstat_mqc
-    file "*.{idxstats,stats}" into ch_mrep_bam_stats_mqc
-    file "*.txt" into ch_mrep_bam_metrics_mqc
+    set val(name), file("*.markdup.{bam,bam.bai}") into bedGraphChannel
+    set val(name), file("*.flagstat") into mergeFlagstatMultiqcChannel
+    file "*.{idxstats,stats}" into mergeidxStatsMultiqcChannel
+    file "*.txt" into mergeMarkDuplicatesMultiqcChannel
 
     script:
     bam_files = bams.findAll { it.toString().endsWith('.bam') }.sort()
@@ -356,7 +351,7 @@ process MergedRepBAM {
     }
 }
 
-ch_mrep_bam_bedgraph
+bedGraphChannel
     .map { it ->
         def condition = it[0].split('_')[0]
         def phase = it[0].split('_')[1]
@@ -365,35 +360,22 @@ ch_mrep_bam_bedgraph
      }
     .groupTuple(by: [0])
     .map { it ->  [ it[0], it[1].flatten() ] }
-    .set { ch_mrep_bam_bedgraph1 }
-
-ch_mrep_bam_bedgraphLog
-        .map { it ->
-            def condition = it[0].split('_')[0]
-            def phase = it[0].split('_')[1]
-            def dictionary = [ (phase) : it[1].flatten()]
-            return tuple(condition, dictionary)
-         }
-        .groupTuple(by: [0])
-        .map { it ->  tuple(it[0], it[1].flatten()) }
-        .subscribe { println it }
+    .set { conditionChannel }
 
 process ELRatio {
 
     tag "$name"
 
     input:
-    set val(name), file(bam) from ch_mrep_bam_bedgraph1
+    set val(name), file(bam) from conditionChannel
 
     output:
-    set val(name), file("*.bg") into bedGraphChannel
+    set val(name), file("*.bg") into ELRatioChannel
 
     script:
 
-    earlyBam = bams[0].containsKey("E") ? bams[0]["E"] : bams[1]["E"]
-    lateBam  = bams[0].containsKey("L") ? bams[0]["L"] : bams[1]["L"]
-    println(earlyBam)
-    println(lateBam)
+    earlyBam = bam[0].containsKey("E") ? bams[0]["E"] : bams[1]["E"]
+    lateBam  = bam[0].containsKey("L") ? bams[0]["L"] : bams[1]["L"]
 
     """
     bamCompare -b1 ${bam[0]["E"]} \
@@ -402,6 +384,23 @@ process ELRatio {
                -bs ${name}.bg \
                --scaleFactorsMethod readCount \
                --operation log2 -p $task.cpus
+    """
+}
+
+process RTNormalization {
+
+    tag "$name"
+
+    input:
+    set val(name), file(bedgraph) from ELRatioChannel.collect()
+
+    output:
+    set val(name), file("*.bg") into RTNormalizationChannel
+
+    script:
+
+    """
+    touch test.bg
     """
 }
 
