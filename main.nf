@@ -375,7 +375,7 @@ ch_mrep_bam_bedgraphLog
             return tuple(condition, dictionary)
          }
         .groupTuple(by: [0])
-        .map { it ->  [ it[0], it[1].flatten() ] }
+        .map { it ->  tuple(it[0], it[1].flatten()) }
         .subscribe { println it }
 
 process ELRatio {
@@ -390,9 +390,14 @@ process ELRatio {
 
     script:
 
+    earlyBam = bams[0].containsKey("E") ? bams[0]["E"] : bams[1]["E"]
+    lateBam  = bams[0].containsKey("L") ? bams[0]["L"] : bams[1]["L"]
+    println(earlyBam)
+    println(lateBam)
+
     """
-    bamCompare -b1 ${bam[0]["E"][0]} \
-               -b2 ${bam[0]["L"][0]} \
+    bamCompare -b1 ${bam[0]["E"]} \
+               -b2 ${bam[1]["L"]} \
                -o test.bg -of bedgraph \
                -bs ${name}.bg \
                --scaleFactorsMethod readCount \
