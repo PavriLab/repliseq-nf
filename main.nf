@@ -377,21 +377,21 @@ process ELRatio {
     tag "$name"
 
     input:
-    set val(name), file(bam) from conditionChannel
+    set val(name), val(bam) from conditionChannel
 
     output:
     set val(name), file("*.bg") into ELRatioChannel
 
     script:
 
-    earlyBam = bam[0].containsKey("E") ? bams[0]["E"] : bams[1]["E"]
-    lateBam  = bam[0].containsKey("L") ? bams[0]["L"] : bams[1]["L"]
+    earlyBam = bam[0].containsKey("E") ? bam[0]["E"] : bam[1]["E"]
+    lateBam  = bam[0].containsKey("L") ? bam[0]["L"] : bam[1]["L"]
 
     """
-    bamCompare -b1 ${bam[0]["E"]} \
-               -b2 ${bam[1]["L"]} \
-               -o test.bg -of bedgraph \
-               -bs ${name}.bg \
+    bamCompare -b1 ${earlyBam[0]} \
+               -b2 ${lateBam[0]} \
+               -o ${name}.bg -of bedgraph \
+               -bs ${params.windowSize} \
                --scaleFactorsMethod readCount \
                --operation log2 -p $task.cpus
     """
@@ -412,7 +412,7 @@ process RTNormalization {
     if (multipleGroups) {
 
       '''
-      echo -e "chr\tstart\tstop\t"`ls *.bg` | sed 's/\ /\t/g' > merge_RT.txt
+      echo -e "chr\tstart\tstop\t"`ls *.bg` | sed "s/\ /\t/g" > merge_RT.txt
       bedtools unionbedg -filler "NA" -i *.bg >> merge_RT.txt
 
       '''
@@ -420,7 +420,7 @@ process RTNormalization {
     } else {
 
       '''
-      echo -e "chr\tstart\tstop\t"`ls *.bg` | sed 's/\ /\t/g' > merge_RT.txt
+      echo -e "chr\tstart\tstop\t"`ls *.bg` | sed "s/\ /\t/g" > merge_RT.txt
       cat *.bg >> merge_RT.txt
 
       '''
