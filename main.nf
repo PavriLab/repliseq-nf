@@ -380,8 +380,8 @@ process ELRatio {
     script:
 
     """
-    bamCompare -b1 $bam[0]["E"][0] \
-               -b2 $bam[0]["L"][0] \
+    bamCompare -b1 ${bam[0]["E"][0]} \
+               -b2 ${bam[0]["L"][0]} \
                -o test.bg -of bedgraph \
                -bs ${name}.bg \
                --scaleFactorsMethod readCount \
