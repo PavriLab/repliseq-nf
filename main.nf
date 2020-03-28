@@ -433,7 +433,7 @@ process RTNormalization {
     file(bedgraph) from ELRatioChannel.collect()
 
     output:
-    file("*.bg") into RTNormalizationChannel
+    file("*.bedGraph") into RTNormalizationChannel
 
     shell:
 
@@ -445,6 +445,12 @@ process RTNormalization {
 
       rtnormalize.r -r merge_RT.txt -s !{params.loessSpan}
 
+      for file in `ls *bg`;
+      do
+        $name=${file%.bg}
+        sort -k1,1 -k2,2n $file > ${name}.bedGraph
+      done
+
       '''
 
     } else {
@@ -455,6 +461,12 @@ process RTNormalization {
 
       rtnormalize.r -r merge_RT.txt -s !{params.loessSpan}
 
+      for file in `ls *bg`;
+      do
+        $name=${file%.bg}
+        sort -k1,1 -k2,2n $file > ${name}.bedGraph
+      done
+
       '''
     }
 }
@@ -462,7 +474,7 @@ process RTNormalization {
 RTNormalizationChannel
   .flatten()
   .map { it ->  [ it.baseName, it ] }
-  .set(bigwigInputChannel)
+  .set { bigwigInputChannel }
 
 process bigwig {
 
@@ -482,10 +494,9 @@ process bigwig {
 
     script:
 
-    '''
+    """
     bedGraphToBigWig $bedgraph $chrsizes ${name}.bw
-
-    '''
+    """
 }
 
 
