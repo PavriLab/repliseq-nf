@@ -333,7 +333,8 @@ process MergedRepBAM {
                       else if (filename.endsWith(".idxstats")) "samtools_stats/$filename"
                       else if (filename.endsWith(".stats")) "samtools_stats/$filename"
                       else if (filename.endsWith(".metrics.txt")) "picard_metrics/$filename"
-                      else if (filename.endsWith(".{bam,bam.bai}")) "bams/$filename"
+                      else if (filename.endsWith(".bam")) "bams/$filename"
+                      else if (filename.endsWith(".bai")) "bams/$filename"
                       else filename
                 }
 
@@ -447,7 +448,7 @@ process RTNormalization {
 
       for file in `ls *bg`;
       do
-        $name=${file%.bg}
+        name=${file%.bg}
         sort -k1,1 -k2,2n $file > ${name}.bedGraph
       done
 
@@ -463,7 +464,7 @@ process RTNormalization {
 
       for file in `ls *bg`;
       do
-        $name=${file%.bg}
+        name=${file%.bg}
         sort -k1,1 -k2,2n $file > ${name}.bedGraph
       done
 
@@ -478,10 +479,13 @@ RTNormalizationChannel
 
 process bigwig {
 
-  publishDir path: "${params.outputDir}",
-              mode: 'copy',
-              overwrite: 'true',
-              pattern: "*bw"
+  publishDir "${params.outputDir}", mode: 'copy', overwrite: 'true',
+      saveAs: { filename ->
+                    if (filename.endsWith(".qnorm.bw")) "bigwigs/quantile_normalized/$filename"
+                    else if (filename.endsWith(".qnorm.loess.bw")) "bigwigs/quantile_normalized_loess/$filename"
+                    else if (filename.endsWith(".loess.bw")) "bigwigs/unnormalized_loess/$filename"
+                    else "bigwigs/unnormalized/$filename"
+              }
 
     tag "$name"
 
