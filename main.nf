@@ -435,10 +435,11 @@ process ELRatio {
 
 process RTNormalization {
 
-    publishDir "${params.outputDir}",
-    mode: 'copy',
-    overwrite: 'true',
-    pattern: "*.bedGraph"
+  publishDir "${params.outputDir}", mode: 'copy', overwrite: 'true',
+      saveAs: { filename ->
+                    if (filename.endsWith(".bedGraph")) "bedGraph/$filename"
+                    else filename
+              }
 
     input:
     file(bedgraph) from ELRatioChannel.collect()
