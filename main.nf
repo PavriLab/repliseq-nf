@@ -77,8 +77,6 @@ if (params.help) {
     exit 0
 }
 
-
-
 log.info ""
 log.info " parameters "
 log.info " ======================"

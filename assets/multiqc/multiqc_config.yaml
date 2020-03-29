@@ -5,12 +5,12 @@ export_plots: true
 
 module_order:
     - fastqc:
-        name: 'FastQC (library; raw)'
+        name: 'FastQC (library)'
         info: 'This section of the report shows FastQC results before adapter trimming.'
         path_filters:
             - '*_fastqc.zip'
     - cutadapt:
-        name: 'cutadapt (library; trimmed)'
+        name: 'cutadapt (library)'
         info: 'This section of the report shows the length of trimmed reads by cutadapt.'
         path_filters:
             - '*_trimming_report.txt'
