@@ -55,7 +55,8 @@ def helpMessage() {
 
         References:
         --genome         Name of reference (hg38, mm10)
-        --fasta          Alternatively, path to genome fasta file which will be digested
+        --fasta          Alternatively, path to genome fasta file from which to calculate bwa index
+        --bwa            Alternatively, path to bwa index if it has been precalulcated
 
      Profiles:
         standard         local execution
