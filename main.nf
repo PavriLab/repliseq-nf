@@ -537,7 +537,7 @@ process MultiQC {
     rtitle = customRunName ? "--title \"$customRunName\"" : ''
     rfilename = customRunName ? "--filename " + customRunName.replaceAll('\\W','_').replaceAll('_+','_') + "_multiqc_report" : ''
     """
-    multiqc . -f $rtitle $rfilename --config $multiqc_config \\
+    multiqc . -f $rtitle $rfilename --config $multiqcConfig \\
         -m custom_content -m fastqc -m cutadapt -m samtools -m picard
     """
 }
