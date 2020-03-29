@@ -435,7 +435,10 @@ process ELRatio {
 
 process RTNormalization {
 
-    tag "$name"
+    publishDir "${params.outputDir}",
+    mode: 'copy',
+    overwrite: 'true',
+    pattern: "*.bedGraph"
 
     input:
     file(bedgraph) from ELRatioChannel.collect()
@@ -534,7 +537,7 @@ process MultiQC {
     rtitle = customRunName ? "--title \"$customRunName\"" : ''
     rfilename = customRunName ? "--filename " + customRunName.replaceAll('\\W','_').replaceAll('_+','_') + "_multiqc_report" : ''
     """
-    multiqc . -f $rtitle $rfilename \\
+    multiqc . -f $rtitle $rfilename --config $multiqc_config \\
         -m custom_content -m fastqc -m cutadapt -m samtools -m picard
     """
 }

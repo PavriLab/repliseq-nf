@@ -117,9 +117,3 @@ custom_plot_config:
     picard-insertsize:
         cpswitch_c_active: False
         smooth_points: 1000
-
-    featurecounts:
-        cpswitch_c_active: False
-
-    featurecounts-1:
-        cpswitch_c_active: False
