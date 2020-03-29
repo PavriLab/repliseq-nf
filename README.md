@@ -16,23 +16,23 @@ We loosely follow the steps of the [Nature protocols paper](http://dx.doi.org/10
 2. Adapter trimming ([`Trim Galore!`](https://www.bioinformatics.babraham.ac.uk/projects/trim_galore/))
 3. Alignment ([`BWA`](https://sourceforge.net/projects/bio-bwa/files/))
 4. Filter for:
-  * reads that are marked as duplicates ([`SAMtools`](https://sourceforge.net/projects/samtools/files/samtools/))
-  * reads that arent marked as primary alignments ([`SAMtools`](https://sourceforge.net/projects/samtools/files/samtools/))
-  * reads that are unmapped ([`SAMtools`](https://sourceforge.net/projects/samtools/files/samtools/))
-  * reads that map to multiple locations ([`SAMtools`](https://sourceforge.net/projects/samtools/files/samtools/))
-  * reads containing > 4 mismatches ([`BAMTools`](https://github.com/pezmaster31/bamtools))
-  * reads that are soft-clipped ([`BAMTools`](https://github.com/pezmaster31/bamtools))
-  * reads that have an insert size > 2kb ([`BAMTools`](https://github.com/pezmaster31/bamtools); *paired-end only*)
-  * reads that map to different chromosomes ([`Pysam`](http://pysam.readthedocs.io/en/latest/installation.html); *paired-end only*)
-  * reads that arent in FR orientation ([`Pysam`](http://pysam.readthedocs.io/en/latest/installation.html); *paired-end only*)
-  * reads where only one read of the pair fails the above criteria ([`Pysam`](http://pysam.readthedocs.io/en/latest/installation.html); *paired-end only*)
+   * reads that are marked as duplicates ([`SAMtools`](https://sourceforge.net/projects/samtools/files/samtools/))
+   * reads that arent marked as primary alignments ([`SAMtools`](https://sourceforge.net/projects/samtools/files/samtools/))
+   * reads that are unmapped ([`SAMtools`](https://sourceforge.net/projects/samtools/files/samtools/))
+   * reads that map to multiple locations ([`SAMtools`](https://sourceforge.net/projects/samtools/files/samtools/))
+   * reads containing > 4 mismatches ([`BAMTools`](https://github.com/pezmaster31/bamtools))
+   * reads that are soft-clipped ([`BAMTools`](https://github.com/pezmaster31/bamtools))
+   * reads that have an insert size > 2kb ([`BAMTools`](https://github.com/pezmaster31/bamtools); *paired-end only*)
+   * reads that map to different chromosomes ([`Pysam`](http://pysam.readthedocs.io/en/latest/installation.html); *paired-end only*)
+   * reads that arent in FR orientation ([`Pysam`](http://pysam.readthedocs.io/en/latest/installation.html); *paired-end only*)
+   * reads where only one read of the pair fails the above criteria ([`Pysam`](http://pysam.readthedocs.io/en/latest/installation.html); *paired-end only*)
 5. Merge filtered alignments across replicates ([`picard`](https://broadinstitute.github.io/picard/))
 6. Re-mark duplicates ([`picard`](https://broadinstitute.github.io/picard/))
 7. Calculate E/L ratio (replication timing) RT-tracks ([`deepTools`](https://deeptools.readthedocs.io/en/develop/content/tools/plotFingerprint.html))
 8. Normalize RT-tracks:
-  * Loess-smoothened raw tracks
-  * Quantile-normalized raw tracks across all samples
-  * Loess-smoothened quantile-normalized tracks across all samples
+   * Loess-smoothened raw tracks
+   * Quantile-normalized raw tracks across all samples
+   * Loess-smoothened quantile-normalized tracks across all samples
 9. Create bigWig files [`bedGraphToBigWig`](http://hgdownload.soe.ucsc.edu/admin/exe/))
 10. Present QC for raw reads, alignment and filtering [`MultiQC`](http://multiqc.info/)
 
@@ -47,8 +47,6 @@ iii. Start running your own analysis!
 ```bash
 nextflow run t-neumann/repliseq-nf --design design.txt --genome mm9 --singleEnd
 ```
-
-See [usage docs](docs/usage.md) for all of the available options when running the pipeline.
 
 ## Main arguments
 
@@ -114,7 +112,7 @@ The pipeline config files come bundled with paths to the illumina iGenomes refer
 
 There are 31 different species supported in the iGenomes references. To run the pipeline, you must specify which to use with the `--genome` flag.
 
-You can find the keys to specify the genomes in the [iGenomes config file](../conf/igenomes.config). Common genomes that are supported are:
+You can find the keys to specify the genomes in the [iGenomes config file](../conf/genomes.config). Common genomes that are supported are:
 
 * Human
   * `--genome GRCh37`
@@ -135,7 +133,8 @@ The syntax for this reference configuration is as follows:
 params {
   genomes {
     'GRCh37' {
-      fasta   = '<path to the genome fasta file>' // Used if no star index given
+      fasta   = '<path to the genome fasta file>' // Used if no bwa index given
+      bwa     = '<path to the bwa index file>'
     }
     // Any number of additional genomes, key is used with --genome
   }
