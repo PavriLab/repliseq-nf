@@ -27,7 +27,7 @@
 def helpMessage() {
     log.info"""
     ================================================================
-     hicer-nf
+     repliseq-nf
     ================================================================
      DESCRIPTION
 
@@ -72,6 +72,9 @@ def helpMessage() {
 }
 
 params.help = false
+params.name  = false
+params.bwa   = false
+params.fasta = false
 
 if (params.help) {
     helpMessage()
