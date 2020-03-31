@@ -99,13 +99,19 @@ for(i in 1:length(AllLoess)){
 ## Quantile normalization                     ##
 ################################################
 
-merge_values<-as.matrix(merge[,4:ncol(merge)])
+if (ncol(merge) > 4) {
 
-ad<-stack(merge[,4:ncol(merge)])$values
+  merge_values<-as.matrix(merge[,4:ncol(merge)])
 
-norm_data<-normalize.quantiles.use.target(merge_values,ad)
-merge_norm<-data.frame(merge[,1:3],norm_data)
-colnames(merge_norm)<-colnames(merge)
+  ad<-stack(merge[,4:ncol(merge)])$values
+
+  norm_data<-normalize.quantiles.use.target(merge_values,ad)
+  merge_norm<-data.frame(merge[,1:3],norm_data)
+  colnames(merge_norm)<-colnames(merge)
+
+} else {
+  merge_norm = merge
+}
 
 for(i in 4:ncol(merge_norm)){
   write.table(merge_norm[complete.cases(merge_norm[,i]), c(1,2,3,i)],

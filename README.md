@@ -167,7 +167,7 @@ Window size in which to calculate E/L ratios (default: 5000).
 
 ### `--loessSpan`
 
-Span size of the loess smoothing (default: 30000).
+Span size of the loess smoothing (default: 300000).
 
 ```bash
 --loessSpan '[span size in bp]'
