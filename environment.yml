@@ -1,0 +1,14 @@
+name: repliseq-nf
+dependencies:
+  - trim-galore=0.6.5
+  - samtools=1.9
+  - multiqc=1.8
+  - bwa=0.7.17
+  - picard=2.22.1
+  - bamtools=2.5.1
+  - deeptools=3.4.1
+  - bioconductor-preprocesscore=1.46.0
+  - bedtools=2.29.2
+  - libopenblas=0.3.3
+  - r-getopt=1.20.3
+  - ucsc-bedgraphtobigwig=377
