@@ -42,10 +42,15 @@ i. Install [`nextflow`](https://nf-co.re/usage/installation)
 
 ii. Install one of [`docker`](https://docs.docker.com/engine/installation/), [`singularity`](https://www.sylabs.io/guides/3.0/user-guide/) or [`conda`](https://conda.io/miniconda.html)
 
-iii. Start running your own analysis!
+iii. Clone repository
+```bash
+nextflow pull pavrilab/repliseq-nf
+```
+
+iv. Start running your own analysis!
 
 ```bash
-nextflow run t-neumann/repliseq-nf --design design.txt --genome mm9 --singleEnd
+nextflow run pavrilab/repliseq-nf --design design.txt --genome mm9 --singleEnd
 ```
 
 ## Main arguments
