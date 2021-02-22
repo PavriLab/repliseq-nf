@@ -95,6 +95,7 @@ log.info " Output directory         : ${params.outputDir}"
 log.info " ======================"
 log.info ""
 
+println params.genomes[ params.genome ].bwa
 params.bwa = params.genome ? params.genomes[ params.genome ].bwa ?: false : false
 params.fasta = params.genome ? params.genomes[ params.genome ].fasta ?: false : false
 
