@@ -73,31 +73,13 @@ def helpMessage() {
 
 params.help = false
 params.name  = false
-params.bwa   = false
-params.fasta = false
+params.bwa = params.genome ? params.genomes[ params.genome ].bwa ?: false : false
+params.fasta = params.genome ? params.genomes[ params.genome ].fasta ?: false : false
 
 if (params.help) {
     helpMessage()
     exit 0
 }
-
-log.info ""
-log.info " parameters "
-log.info " ======================"
-log.info " Design                   : ${params.design}"
-log.info " Window size              : ${params.windowSize}"
-log.info " Loess span               : ${params.loessSpan}"
-log.info " Single end               : ${params.singleEnd}"
-log.info " Genome                   : ${params.genome}"
-log.info " Fasta                    : ${params.fasta}"
-log.info " BWA index                : ${params.bwa}"
-log.info " Output directory         : ${params.outputDir}"
-log.info " ======================"
-log.info ""
-
-println params.genomes[ params.genome ].bwa
-params.bwa = params.genome ? params.genomes[ params.genome ].bwa ?: false : false
-params.fasta = params.genome ? params.genomes[ params.genome ].fasta ?: false : false
 
 if (params.design)     { designChannel = file(params.design, checkIfExists: true) } else { exit 1, "Samples design file not specified!" }
 
@@ -139,6 +121,20 @@ if (params.bwa) {
 } else {
     exit 1, "No reference genome files specified!"
 }
+
+log.info ""
+log.info " parameters "
+log.info " ======================"
+log.info " Design                   : ${params.design}"
+log.info " Window size              : ${params.windowSize}"
+log.info " Loess span               : ${params.loessSpan}"
+log.info " Single end               : ${params.singleEnd}"
+log.info " Genome                   : ${params.genome}"
+log.info " Fasta                    : ${params.fasta}"
+log.info " BWA index                : ${params.bwa}"
+log.info " Output directory         : ${params.outputDir}"
+log.info " ======================"
+log.info ""
 
 process MakeGenomeFilter {
     tag "$fasta"
