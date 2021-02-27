@@ -284,6 +284,16 @@ process TrimGalore {
  */
 process BWAMem {
     tag "$name"
+    publishDir "${params.outputDir}", mode: 'copy',
+        saveAs: { filename ->
+                      if (filename.endsWith(".flagstat")) "samtools_stats/$filename"
+                      else if (filename.endsWith(".idxstats")) "samtools_stats/$filename"
+                      else if (filename.endsWith(".stats")) "samtools_stats/$filename"
+                      else if (filename.endsWith(".metrics.txt")) "picard_metrics/$filename"
+                      else if (filename.endsWith(".bam")) "bams/$filename"
+                      else if (filename.endsWith(".bai")) "bams/$filename"
+                      else filename
+                }
 
     input:
     set val(name), file(reads) from trimmedReadChannel
