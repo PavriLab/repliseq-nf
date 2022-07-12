@@ -1,6 +1,7 @@
 # repliseq-nf
 
-[![Nextflow](https://img.shields.io/badge/nextflow-%E2%89%A519.10.0-brightgreen.svg)](https://www.nextflow.io/)
+[![Nextflow](https://img.shields.io/badge/nextflow-%E2%89%A519.10.0-brightgreen.svg)](https://www.nextflow.io/) [![DOI](https://zenodo.org/badge/249965810.svg)](https://zenodo.org/badge/latestdoi/249965810)
+
 
 ## Introduction
 
